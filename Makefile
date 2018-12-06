@@ -1,6 +1,5 @@
 PROG		= MyMCU
-SOURCES		:= main.cxx
-
+SOURCES		:= connection.cxx buffer.cxx main.cxx ep.cxx  channel.cxx 
 ifndef OPENH323DIR
 OPENH323DIR=$(HOME)/h323plus
 endif

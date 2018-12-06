@@ -69,13 +69,6 @@ bool MyH323EndPoint::Init()
 	return true;
 }
 // ***********************************************************************
-#if _H323Connection
-H323Connection * MyH323Endpoint::CreateConnection(unsigned callReference)
-{
-	return new MyH323Connection(*this,callReference);
-}
-#endif 
-// ***********************************************************************
 void MyH323EndPoint::OnConnectionEstablished(H323Connection & connection, 
 						const PString & token)
 {
@@ -118,6 +111,7 @@ bool MyH323EndPoint::OnStartLogicalChannel(H323Connection & connection,
 	return true;
 }
 // ***********************************************************************
+#if 0
 bool MyH323EndPoint::OpenAudioChannel(H323Connection &connection, 
 						bool isEncoding,
 						unsigned bufferSize, 
@@ -127,4 +121,93 @@ bool MyH323EndPoint::OpenAudioChannel(H323Connection &connection,
 	NullChannel *ch = new NullChannel();
 	return codec.AttachChannel(ch, true);
 } 
+#endif
 // ***********************************************************************
+
+H323Connection * MyH323EndPoint::CreateConnection(unsigned callReference)
+{
+	return new MyH323Connection(*this,callReference);
+}
+
+// ***********************************************************************
+void MyH323EndPoint::AddMember(MyH323Connection * newMember)
+{
+  PWaitAndSignal mutex(memberMutex);
+  PString newToken = newMember->GetCallToken();
+
+  memberList.AppendString(newToken);
+  // add the new member to every other member,
+  // and add every other member to the new member.
+  PINDEX i;
+  for (i = 0; i < memberList.GetSize(); i++) {
+    PString token = memberList[i];
+    if (token != newToken) {      
+      cout << "Adding member " << newToken << " to list of " << token << endl;
+      MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
+      if (conn != NULL) {
+        conn->AddMember(newToken);
+        newMember->AddMember(token);
+        conn->Unlock();
+      }
+    } 
+    else 
+        cout << "Member " << newToken << " will not hear their own voice" << endl; 
+  }
+}
+// ***********************************************************************
+void MyH323EndPoint::RemoveMember(MyH323Connection * oldConn)
+{
+  PWaitAndSignal mutex(memberMutex);
+  PString oldToken = oldConn->GetCallToken();
+  PINDEX i;
+  // remove this member from the audio buffer lists
+  for (i = 0; i < memberList.GetSize(); i++) {
+    PString token = memberList[i];
+    if (token != oldToken) {
+      MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
+      if (conn != NULL) {
+	conn->RemoveMember(oldToken);
+	oldConn->RemoveMember(token);
+        conn->Unlock();
+      }
+    }
+  }
+  // remove this connection from the member list
+  memberList.RemoveAt(memberList.GetStringsIndex(oldToken));
+}
+// ***********************************************************************
+bool MyH323EndPoint::WriteAudio(const PString & thisToken, const void * buffer, PINDEX len)
+{
+	PWaitAndSignal mutex(memberMutex);
+	PINDEX i;
+    for (i = 0; i < memberList.GetSize(); i++) {
+    	PString token = memberList[i];
+    	if (token != thisToken) {
+      		MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
+      		if (conn != NULL) { 
+				conn->WriteAudio(thisToken, buffer, len);
+        	conn->Unlock();
+        	}
+    	} 
+    	else
+    		continue;      
+    }
+    return TRUE;
+}
+// ***********************************************************************
+bool MyH323EndPoint::ReadAudio(const PString & thisToken, void * buffer, PINDEX len)
+{
+	PWaitAndSignal mutex(memberMutex);
+	PINDEX i;
+  	for (i = 0; i < memberList.GetSize(); i++) {
+    	PString token = memberList[i];
+    	if (token == thisToken) {
+    		MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
+      		if (conn != NULL) {
+        		conn->ReadAudio(thisToken, buffer, len);
+        		conn->Unlock();
+      		}
+    	}
+  	}
+  	return TRUE;
+}

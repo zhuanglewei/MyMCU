@@ -10,7 +10,7 @@ class MyMCU: public PProcess
 public:
 	MyMCU();
 	virtual ~MyMCU();
-
+	void printHelp();
 	virtual void Main();
 };
 
