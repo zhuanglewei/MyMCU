@@ -10,7 +10,9 @@
 
 class MyH323EndPoint;
 class MyH323Connection;
+
 // ***********************************************************************
+#if 0
 class NullChannel: public PIndirectChannel
 {
   PCLASSINFO(NullChannel, PIndirectChannel);
@@ -25,14 +27,14 @@ public:
 	virtual bool Read(void *buf, PINDEX len);
 	virtual bool Write(const void *buf, PINDEX len); 
 };
-
-class IncomingAudio : public PChannel
+#endif
+class MCUAudioChannel : public PChannel
 {
-	PCLASSINFO(IncomingAudio,PChannel);
+	PCLASSINFO(MCUAudioChannel,PChannel);
 public:
-	IncomingAudio(MyH323EndPoint & _ep, MyH323Connection & _conn);
-	~IncomingAudio();
-
+	MCUAudioChannel(MyH323EndPoint & _ep, MyH323Connection & _conn);
+	~MCUAudioChannel();
+	virtual bool Read(void * buffer, PINDEX len);
 	virtual bool Write(const void * buffer, PINDEX len);
 	virtual bool Close();
 	virtual bool IsOpen() const { return isOpen; };
@@ -41,25 +43,7 @@ private:
 	MyH323EndPoint & ep;
 	MyH323Connection & conn;
 	PMutex audioChanMutex;
-	PAdaptiveDelay writeDelay;	
+	PAdaptiveDelay Delay;	
 };
-
-class OutgoingAudio : public PChannel
-{
-	PCLASSINFO(OutgoingAudio, PChannel);
-public:
-	OutgoingAudio(MyH323EndPoint & _ep, MyH323Connection & _conn);
-	~OutgoingAudio();
-	virtual bool Read(void * buffer, PINDEX len);
-	virtual bool Close();
-	virtual bool IsOpen() { return isOpen; };
-private:
-	MyH323EndPoint & ep;
-	MyH323Connection & conn;
-	bool isOpen;
-	PMutex audioChanMutex;
-	PAdaptiveDelay readDelay;
-};
-
 
 #endif

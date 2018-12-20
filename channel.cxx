@@ -1,6 +1,6 @@
 #include "channel.h"
 
-
+#if 0
 // ***********************************************************************
 NullChannel::NullChannel(): isOpen(true)
 {
@@ -32,53 +32,41 @@ bool NullChannel::Read(void *buf, PINDEX len)
 	readDelay.Delay(len/2/8);
 	return true;	
 }
+#endif
 // ***********************************************************************
-IncomingAudio::IncomingAudio(MyH323EndPoint & _ep, MyH323Connection & _conn) : ep(_ep) , conn(_conn)
+MCUAudioChannel::MCUAudioChannel(MyH323EndPoint & _ep, MyH323Connection & _conn) : ep(_ep) , conn(_conn)
 {
 	isOpen = true;
 }
 // ***********************************************************************
-IncomingAudio::~IncomingAudio()
+MCUAudioChannel::~MCUAudioChannel()
 {
 	isOpen = false;
 }
 // ***********************************************************************
-bool IncomingAudio::Write(const void * buffer, PINDEX len)
+bool MCUAudioChannel::Write(const void * buffer, PINDEX len)
 {
 	PWaitAndSignal mutexW(audioChanMutex);
 	if(!IsOpen())
 		return false;
-	writeDelay.Delay(len/2/8);
+	Delay.Delay(len/2/8);
 	lastWriteCount = len;
 	return conn.OnIncomingAudio(buffer, len);
 }
 // ***********************************************************************
-bool IncomingAudio::Close()
+bool MCUAudioChannel::Close()
 {
 	PWaitAndSignal mutexA(audioChanMutex);
 	isOpen = false;
 	return true;
 }
 // ***********************************************************************
-OutgoingAudio::OutgoingAudio(MyH323EndPoint & _ep, MyH323Connection & _conn): ep(_ep), conn(_conn),isOpen(true)
-{}
-// ***********************************************************************
-OutgoingAudio::~OutgoingAudio()
-{}
-// ***********************************************************************
-bool OutgoingAudio::Read(void * buffer, PINDEX len)
+bool MCUAudioChannel::Read(void * buffer, PINDEX len)
 {
 	PWaitAndSignal mutexR(audioChanMutex);
 	if(!IsOpen())
 		return false;
-	readDelay.Delay(len/2/8);
+	Delay.Delay(len/2/8);
 	lastReadCount = len;
 	return conn.OnOutgoingAudio(buffer, len);
-}
-// ***********************************************************************
-bool OutgoingAudio::Close()
-{
-	PWaitAndSignal mutexA(audioChanMutex);
-	isOpen = false;
-	return true;
 }
