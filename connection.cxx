@@ -68,16 +68,16 @@ bool MyH323Connection::WriteAudio(const PString & token, const void * buffer, PI
   return TRUE;
 }
 // ***********************************************************************
-bool MyH323Connection::ReadAudio(const PString & /*token*/, void * buffer, PINDEX amount)
+bool MyH323Connection::ReadAudio(void * buffer, PINDEX amount)
 {
   PWaitAndSignal mutex(audioMutex);
-  // First, set the buffer to empty.
+  
   memset(buffer, 0, amount);
-  // get number of channels to mix
+
   PINDEX numChannels = audioBuffers.GetSize();
   if (numChannels== 0) 
     return TRUE;
-  // scan through the audio buffers and mix the signals
+
   PINDEX i;
   for (i = 0; i < numChannels; i++) {
     PString key = audioBuffers.GetKeyAt(i);
@@ -108,10 +108,12 @@ bool MyH323Connection::OnIncomingAudio(const void * buffer, PINDEX len)
   return ep.WriteAudio(GetCallToken(), buffer, len);
 }
 // ***********************************************************************
+/*
 bool MyH323Connection::OnOutgoingAudio(void * buffer, PINDEX len)
 {
   return ep.ReadAudio(GetCallToken(), buffer, len);
 }
+*/
 // ***********************************************************************
 bool MyH323Connection::OpenAudioChannel(bool isEncoding, unsigned bufferSize, H323AudioCodec & codec)
 {

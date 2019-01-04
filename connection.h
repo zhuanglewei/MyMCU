@@ -7,8 +7,8 @@
 #include "ep.h"
 #include "buffer.h"
 #include "channel.h"
-class IncomingAudio;
-class OutgoingAudio;
+
+class MCUAudioChannel;
 class MyH323EndPoint;
 
 class MyH323Connection : public H323Connection
@@ -26,19 +26,19 @@ class MyH323Connection : public H323Connection
     virtual bool OpenAudioChannel(bool isEncoding, unsigned bufferSize, H323AudioCodec & codec);
 
     bool OnIncomingAudio(const void * buffer, PINDEX len);
-    bool OnOutgoingAudio(void * buffer, PINDEX len);
+//    bool OnOutgoingAudio(void * buffer, PINDEX len);
     void AddMember(const PString & token);
     void RemoveMember(const PString & token);
 
 
-    bool ReadAudio(const PString & token, void * buffer, PINDEX len);
+    bool ReadAudio(void * buffer, PINDEX len);
     bool WriteAudio(const PString & token, const void * buffer, PINDEX len);
-
+    AudioBufferDict audioBuffers;
 
 private:
-	IncomingAudio * incomingAudio;
-	OutgoingAudio * outgoingAudio;
-	AudioBufferDict audioBuffers;
+	MCUAudioChannel * incomingAudio;
+	MCUAudioChannel * outgoingAudio;
+	
 	PMutex audioMutex;
 	MyH323EndPoint & ep;
 

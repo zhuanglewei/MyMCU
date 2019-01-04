@@ -40,12 +40,12 @@ public:
 	virtual H323Connection * CreateConnection(unsigned callReference);
 
 	bool WriteAudio(const PString & thisToken, const void * buffer, PINDEX len);
-	bool ReadAudio(const PString & thisToken, void * buffer, PINDEX len);
-
+//	bool ReadAudio(const PString & thisToken, void * buffer, PINDEX len);
+	PStringList memberList;
 private:
 	PMutex memberMutex;
 
-	PStringList memberList;
+	
 
 };
 

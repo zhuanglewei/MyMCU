@@ -39,6 +39,10 @@ public:
 	virtual bool Close();
 	virtual bool IsOpen() const { return isOpen; };
 private:
+	bool ReadBufferAudio(void * buffer, PINDEX amount);
+	bool WriteMemberAudio(const void * buffer, PINDEX len);
+	bool WriteBufferAudio(const PString & token, const void * buffer, PINDEX len,MyH323Connection * member);
+	PString * thisToken;
 	bool isOpen;
 	MyH323EndPoint & ep;
 	MyH323Connection & conn;

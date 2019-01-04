@@ -136,6 +136,7 @@ void MyH323EndPoint::AddMember(MyH323Connection * newMember)
   PString newToken = newMember->GetCallToken();
 
   memberList.AppendString(newToken);
+  cout << "newmember adding." << endl;
   // add the new member to every other member,
   // and add every other member to the new member.
   PINDEX i;
@@ -195,6 +196,7 @@ bool MyH323EndPoint::WriteAudio(const PString & thisToken, const void * buffer, 
     return TRUE;
 }
 // ***********************************************************************
+/*
 bool MyH323EndPoint::ReadAudio(const PString & thisToken, void * buffer, PINDEX len)
 {
 	PWaitAndSignal mutex(memberMutex);
@@ -211,3 +213,4 @@ bool MyH323EndPoint::ReadAudio(const PString & thisToken, void * buffer, PINDEX 
   	}
   	return TRUE;
 }
+*/
