@@ -21,11 +21,6 @@ public:
 					const PString &token);
 	virtual void OnConnectionCleared(H323Connection &connection,
 					const PString &token);
-#if 0
-	virtual bool OpenAudioChannel(H323Connection &connection,
-					bool isEncoding, unsigned bufferSize,
-					H323AudioCodec &codec);
-#endif
 	virtual H323Connection::AnswerCallResponse OnAnswerCall(
 					H323Connection &connection,
 					const PString &caller,
@@ -39,8 +34,6 @@ public:
 
 	virtual H323Connection * CreateConnection(unsigned callReference);
 
-	bool WriteAudio(const PString & thisToken, const void * buffer, PINDEX len);
-//	bool ReadAudio(const PString & thisToken, void * buffer, PINDEX len);
 	PStringList memberList;
 private:
 	PMutex memberMutex;

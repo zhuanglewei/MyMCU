@@ -1,38 +1,6 @@
 #include "channel.h"
 
-#if 0
-// ***********************************************************************
-NullChannel::NullChannel(): isOpen(true)
-{
-	cout << "Creating NULL channel" << endl;
-}
-// ***********************************************************************
-NullChannel::~NullChannel()
-{
-	cout << "Deleting NULL channel" << endl;
-}
-// ***********************************************************************
-bool NullChannel::Close()
-{
-	isOpen = false;
-	return true;
-}
-// ***********************************************************************
-bool NullChannel::Write(const void *buf, PINDEX len)
-{
-	lastWriteCount = len;
-	writeDelay.Delay(len/2/8);
-	return true;
-}
-// ***********************************************************************
-bool NullChannel::Read(void *buf, PINDEX len)
-{
-	memset(buf, 0, len);
-	lastReadCount = len;
-	readDelay.Delay(len/2/8);
-	return true;	
-}
-#endif
+
 // ***********************************************************************
 MCUAudioChannel::MCUAudioChannel(MyH323EndPoint & _ep, MyH323Connection & _conn) : ep(_ep) , conn(_conn)
 {
@@ -70,7 +38,7 @@ bool MCUAudioChannel::Read(void * buffer, PINDEX len)
 	lastReadCount = len;
 	return ReadBufferAudio(buffer, len);
 }
-
+// ***********************************************************************
 bool MCUAudioChannel::ReadBufferAudio(void * buffer, PINDEX amount)
 {
 //  PWaitAndSignal mutex(audioMutex);
@@ -88,8 +56,8 @@ bool MCUAudioChannel::ReadBufferAudio(void * buffer, PINDEX amount)
   }
   return TRUE;
 }
-
-bool MCUAudioChannel::WriteMemberAudio(const void * buffer, PINDEX len)//获取列表成员
+// ***********************************************************************
+bool MCUAudioChannel::WriteMemberAudio(const void * buffer, PINDEX len)//向同个会议成员写入音频数据
 {
 	PString thisToken = conn.GetCallToken();
 
@@ -106,16 +74,12 @@ bool MCUAudioChannel::WriteMemberAudio(const void * buffer, PINDEX len)//获取�
         	}
     	} 
     	else
-    		continue;
-    		     
+    		continue;		     
     }
-
     return TRUE;
-    
-
 }
-
-bool MCUAudioChannel::WriteBufferAudio(const PString & token, const void * buffer, PINDEX len,MyH323Connection * member)
+// ***********************************************************************
+bool MCUAudioChannel::WriteBufferAudio(const PString & token, const void * buffer, PINDEX len,MyH323Connection * member)//向连接中的指定token的buffer写入数据
 {
 
   AudioBuffer * audioBuffer = member->audioBuffers.GetAt(token);

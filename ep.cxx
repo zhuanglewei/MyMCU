@@ -8,7 +8,9 @@ MyH323EndPoint::MyH323EndPoint(const ProgConf & conf) : progConf(conf)
 
 MyH323EndPoint::~MyH323EndPoint()
 {}
+
 // ***********************************************************************
+
 bool MyH323EndPoint::Init()
 {
 	// Set user name
@@ -68,20 +70,25 @@ bool MyH323EndPoint::Init()
 	} 		
 	return true;
 }
+
 // ***********************************************************************
+
 void MyH323EndPoint::OnConnectionEstablished(H323Connection & connection, 
 						const PString & token)
 {
 	PTRACE(1, "Connection established, token is " << token);
-} 
+}
+
 // ***********************************************************************
 
 void MyH323EndPoint::OnConnectionCleared(H323Connection &connection, 
 						const PString &token)
 {
 	PTRACE(1, "Connection cleared, token is " << token);
-} 
+}
+
 // ***********************************************************************
+
 H323Connection::AnswerCallResponse MyH323EndPoint::OnAnswerCall( 
 						H323Connection & connection,
 						const PString & caller, 
@@ -91,7 +98,9 @@ H323Connection::AnswerCallResponse MyH323EndPoint::OnAnswerCall(
 	PTRACE(1, "Accepting connection from " << caller);
 	return H323Connection::AnswerCallNow;
 } 
+
 // ***********************************************************************
+
 bool MyH323EndPoint::OnStartLogicalChannel(H323Connection & connection, 
 						H323Channel & channel)
 {
@@ -110,18 +119,7 @@ bool MyH323EndPoint::OnStartLogicalChannel(H323Connection & connection,
 	cout <<  "Started logical channel " << dir << " " << channel.GetCapability() << endl;
 	return true;
 }
-// ***********************************************************************
-#if 0
-bool MyH323EndPoint::OpenAudioChannel(H323Connection &connection, 
-						bool isEncoding,
-						unsigned bufferSize, 
-						H323AudioCodec &codec)
-{
-	
-	NullChannel *ch = new NullChannel();
-	return codec.AttachChannel(ch, true);
-} 
-#endif
+
 // ***********************************************************************
 
 H323Connection * MyH323EndPoint::CreateConnection(unsigned callReference)
@@ -130,6 +128,7 @@ H323Connection * MyH323EndPoint::CreateConnection(unsigned callReference)
 }
 
 // ***********************************************************************
+
 void MyH323EndPoint::AddMember(MyH323Connection * newMember)
 {
   PWaitAndSignal mutex(memberMutex);
@@ -155,7 +154,9 @@ void MyH323EndPoint::AddMember(MyH323Connection * newMember)
         cout << "Member " << newToken << " will not hear their own voice" << endl; 
   }
 }
+
 // ***********************************************************************
+
 void MyH323EndPoint::RemoveMember(MyH323Connection * oldConn)
 {
   PWaitAndSignal mutex(memberMutex);
@@ -177,40 +178,3 @@ void MyH323EndPoint::RemoveMember(MyH323Connection * oldConn)
   memberList.RemoveAt(memberList.GetStringsIndex(oldToken));
 }
 // ***********************************************************************
-bool MyH323EndPoint::WriteAudio(const PString & thisToken, const void * buffer, PINDEX len)
-{
-	PWaitAndSignal mutex(memberMutex);
-	PINDEX i;
-    for (i = 0; i < memberList.GetSize(); i++) {
-    	PString token = memberList[i];
-    	if (token != thisToken) {
-      		MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
-      		if (conn != NULL) { 
-				conn->WriteAudio(thisToken, buffer, len);
-        	conn->Unlock();
-        	}
-    	} 
-    	else
-    		continue;      
-    }
-    return TRUE;
-}
-// ***********************************************************************
-/*
-bool MyH323EndPoint::ReadAudio(const PString & thisToken, void * buffer, PINDEX len)
-{
-	PWaitAndSignal mutex(memberMutex);
-	PINDEX i;
-  	for (i = 0; i < memberList.GetSize(); i++) {
-    	PString token = memberList[i];
-    	if (token == thisToken) {
-    		MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
-      		if (conn != NULL) {
-        		conn->ReadAudio(thisToken, buffer, len);
-        		conn->Unlock();
-      		}
-    	}
-  	}
-  	return TRUE;
-}
-*/

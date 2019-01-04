@@ -7,7 +7,9 @@ MyH323Connection::MyH323Connection(MyH323EndPoint & _ep, unsigned ref)
   incomingAudio = NULL;
   outgoingAudio = NULL;
 }
+
 // ***********************************************************************
+
 PBoolean MyH323Connection::OnStartLogicalChannel(H323Channel & channel)
 {
   if (!H323Connection::OnStartLogicalChannel(channel))
@@ -32,12 +34,15 @@ PBoolean MyH323Connection::OnStartLogicalChannel(H323Channel & channel)
 
   return TRUE;
 }
+
 // ***********************************************************************
+
 void MyH323Connection::OnUserInputString(const PString & value)
 {
   cout << "User input received: \"" << value << '"' << endl;
 }
 
+// ***********************************************************************
 
 void MyH323Connection::AddMember(const PString & token)
 {
@@ -48,7 +53,9 @@ void MyH323Connection::AddMember(const PString & token)
    audioBuffers.SetAt(token, new AudioBuffer);
    audioMutex.Signal();
 }
+
 // ***********************************************************************
+
 void MyH323Connection::RemoveMember(const PString & token)
 {
   PWaitAndSignal mutex(audioMutex);
@@ -58,41 +65,18 @@ void MyH323Connection::RemoveMember(const PString & token)
 
   audioBuffers.RemoveAt(token);  
 }
-// ***********************************************************************
-bool MyH323Connection::WriteAudio(const PString & token, const void * buffer, PINDEX len)
-{
-  PWaitAndSignal mutex(audioMutex);
-  AudioBuffer * audioBuffer = audioBuffers.GetAt(token);
-  if (audioBuffer != NULL)
-    audioBuffer->Write((BYTE *)buffer, len);
-  return TRUE;
-}
-// ***********************************************************************
-bool MyH323Connection::ReadAudio(void * buffer, PINDEX amount)
-{
-  PWaitAndSignal mutex(audioMutex);
-  
-  memset(buffer, 0, amount);
 
-  PINDEX numChannels = audioBuffers.GetSize();
-  if (numChannels== 0) 
-    return TRUE;
-
-  PINDEX i;
-  for (i = 0; i < numChannels; i++) {
-    PString key = audioBuffers.GetKeyAt(i);
-    audioBuffers[key].ReadAndMix((BYTE *)buffer, amount, numChannels);
-  }
-  return TRUE;
-}
 // ***********************************************************************
+
 bool MyH323Connection::OnSendSignalSetup( H323SignalPDU & callProceedingPDU )
 {
   cout << "Adding connection to room " << endl;
   ep.AddMember(this);
   return H323Connection::OnSendSignalSetup( callProceedingPDU );
 }
+
 // ***********************************************************************
+
 H323Connection::AnswerCallResponse
      MyH323Connection::OnAnswerCall(const PString & caller,
                                     const H323SignalPDU & setupPDU,
@@ -102,19 +86,9 @@ H323Connection::AnswerCallResponse
 
   return AnswerCallNow;
 }
+
 // ***********************************************************************
-bool MyH323Connection::OnIncomingAudio(const void * buffer, PINDEX len)
-{
-  return ep.WriteAudio(GetCallToken(), buffer, len);
-}
-// ***********************************************************************
-/*
-bool MyH323Connection::OnOutgoingAudio(void * buffer, PINDEX len)
-{
-  return ep.ReadAudio(GetCallToken(), buffer, len);
-}
-*/
-// ***********************************************************************
+
 bool MyH323Connection::OpenAudioChannel(bool isEncoding, unsigned bufferSize, H323AudioCodec & codec)
 {
   PWaitAndSignal mutex(audioMutex);
