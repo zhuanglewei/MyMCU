@@ -117,11 +117,11 @@ bool MyH323Connection::OpenAudioChannel(bool isEncoding, unsigned bufferSize, H3
 {
   PWaitAndSignal mutex(audioMutex);
   if (incomingAudio == NULL){
-    incomingAudio = new IncomingAudio(ep, *this);
+    incomingAudio = new MCUAudioChannel(ep, *this);
   }
 
   if (outgoingAudio == NULL) {
-    outgoingAudio = new OutgoingAudio(ep, *this);
+    outgoingAudio = new MCUAudioChannel(ep, *this);
   }
 
   if (isEncoding) {
