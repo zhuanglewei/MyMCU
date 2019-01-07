@@ -19,18 +19,16 @@ void MyMCU::Main()
 	
 	PConfigArgs args(GetArguments()); 
 
-	args.Parse( 
+	args.Parse(
+#if PTRACING
+			"t-trace."
+			"o-output:"
+#endif 
 			"g-gatekeeper:"
 			"G-gatekeeper-id:"
 			"h-help."
 			"n-no-gatekeeper."
-#if PTRACING
-			"o-output:"
-#endif
 			"p-port:"
-#if PTRACING
-			"t-trace."
-#endif
 			"u-user:"
 		);
 
@@ -50,7 +48,7 @@ void MyMCU::Main()
 
 	progConf.gkMode = ProgConf::RegisterWithGatekeeper; 
 
-	if (args.HasOption('n')) 
+	if (args.HasOption('n') || (!args.HasOption('G') && !args.HasOption('G'))) 
 		progConf.gkMode = ProgConf::NoGatekeeper;
 
 	if (args.HasOption('g'))
@@ -65,8 +63,6 @@ void MyMCU::Main()
 		progConf.gkMode = ProgConf::RegisterWithGatekeeper;
 	} 
 
-//	progConf.fileName = args.GetOptionString('f'); 
-
 	if (args.HasOption('p')) 
 		progConf.port = args.GetOptionString('p').AsUnsigned();
 
@@ -76,7 +72,7 @@ void MyMCU::Main()
 	if (args.HasOption('u')) 
 		progConf.userAliases = args.GetOptionString('u').Lines(); 
 
-	// Allocate and initialise H.323 endpoint
+	// 创建并初始化EndPoint
 	MyH323EndPoint endpoint(progConf); 
 
 	if (endpoint.Init()) 
@@ -92,23 +88,20 @@ void MyMCU::Main()
         }
 	}
 
-	cout << "MyMCU shutting down..." << endl;
+	cout << "MyMCU关闭..." << endl;
 }
 
 void MyMCU::printHelp() 
 {
 	PError << "Available options:\n"
-			"-c <ip> --call <ip>        the IP of the Endpoint\n"
-			"-g <addr> --gatekeeper <addr>  the IP address or DNS name of the gatekeeper\n"
-			"-G <id> --gatekeeper-id <id>   gatekeeper identifier\n"
-			"-h --help                      print this message and exit\n"
-			"-n --no-gatekeeper             do not register with gatekeeper\n"
 #if PTRACING
-			"-o <file> --output <file>      send trace output to <file>\n"
+			"-o <file> --output <file>      将PTrace信息保存至<file>中\n"
+			"-t --trace                     启用PTrace功能, 使用更多的t获取更多的调试信息\n"
 #endif
-			"-p <port> --port <port>        TCP port to listen at\n"
-#if PTRACING
-			"-t --trace                     enable trace, use multiple times for more detail\n"
-#endif
-			"-u <user> --user <user>        user name or number (can be used multiple times)\n";
+			"-g <addr> --gatekeeper <addr>  网守的IP地址或DNS域名\n"
+			"-G <id> --gatekeeper-id <id>   网守标识符\n"
+			"-h --help                      输出help信息并退出\n"
+			"-n --no-gatekeeper             不向网守注册\n"
+			"-p <port> --port <port>        TCP监听端口号\n"
+			"-u <user> --user <user>        使用用户名 (能有多个用户名)\n";
 } 

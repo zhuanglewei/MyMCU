@@ -131,24 +131,28 @@ H323Connection * MyH323EndPoint::CreateConnection(unsigned callReference)
 
 void MyH323EndPoint::AddMember(MyH323Connection * newMember)
 {
-  PWaitAndSignal mutex(memberMutex);
-  PString newToken = newMember->GetCallToken();
+	PWaitAndSignal mutex(memberMutex);
+	PString newToken = newMember->GetCallToken();
+	PString RoomID = newMember->GetRoomID();
+	if(RoomID == NULL)
+		return;
+	if(!memberListDict.Contains(RoomID))
+		memberListDict.SetAt(RoomID,new PStringList);
+	PStringList memberList = memberListDict[RoomID];
 
-  memberList.AppendString(newToken);
-  cout << "newmember adding." << endl;
-  // add the new member to every other member,
-  // and add every other member to the new member.
-  PINDEX i;
-  for (i = 0; i < memberList.GetSize(); i++) {
-    PString token = memberList[i];
-    if (token != newToken) {      
-      cout << "Adding member " << newToken << " to list of " << token << endl;
-      MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
-      if (conn != NULL) {
-        conn->AddMember(newToken);
-        newMember->AddMember(token);
-        conn->Unlock();
-      }
+	memberList.AppendString(newToken);
+	cout << "newmember adding." << endl;
+	PINDEX i;
+  	for (i = 0; i < memberList.GetSize(); i++) {
+    	PString token = memberList[i];
+    	if (token != newToken) {      
+      		cout << "Adding member " << newToken << " to list of " << token << endl;
+      		MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
+      		if (conn != NULL) {
+        		conn->AddMember(newToken);
+        		newMember->AddMember(token);
+        		conn->Unlock();
+      		}
     } 
     else 
         cout << "Member " << newToken << " will not hear their own voice" << endl; 
@@ -159,22 +163,29 @@ void MyH323EndPoint::AddMember(MyH323Connection * newMember)
 
 void MyH323EndPoint::RemoveMember(MyH323Connection * oldConn)
 {
-  PWaitAndSignal mutex(memberMutex);
-  PString oldToken = oldConn->GetCallToken();
-  PINDEX i;
-  // remove this member from the audio buffer lists
-  for (i = 0; i < memberList.GetSize(); i++) {
-    PString token = memberList[i];
-    if (token != oldToken) {
-      MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
-      if (conn != NULL) {
-	conn->RemoveMember(oldToken);
-	oldConn->RemoveMember(token);
-        conn->Unlock();
-      }
-    }
-  }
-  // remove this connection from the member list
-  memberList.RemoveAt(memberList.GetStringsIndex(oldToken));
+  	PWaitAndSignal mutex(memberMutex);
+  	PString oldToken = oldConn->GetCallToken();
+  	PString RoomID = oldConn->GetRoomID();
+  	if(RoomID == NULL || !memberListDict.Contains(RoomID))
+  		return;
+  	PStringList memberList = memberListDict[RoomID];
+
+  	PINDEX i;
+  	for (i = 0; i < memberList.GetSize(); i++) {
+    	PString token = memberList[i];
+    	if (token != oldToken) {
+      		MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
+      		if (conn != NULL) {
+				conn->RemoveMember(oldToken);
+				oldConn->RemoveMember(token);
+        		conn->Unlock();
+      		}
+    	}
+  	}
+  	memberList.RemoveAt(memberList.GetStringsIndex(oldToken));
+
+  	if(memberList.GetSize() == 0){
+  		memberListDict.RemoveAt(RoomID);
+  	}
 }
 // ***********************************************************************

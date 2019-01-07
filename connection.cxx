@@ -40,6 +40,11 @@ PBoolean MyH323Connection::OnStartLogicalChannel(H323Channel & channel)
 void MyH323Connection::OnUserInputString(const PString & value)
 {
   cout << "User input received: \"" << value << '"' << endl;
+  if(value == "create"){
+    RoomID = this->GetRemotePartyName();
+    ep.AddMember(this);
+    cout << "创建房间" << RoomID << endl;
+  }
 }
 
 // ***********************************************************************
@@ -82,7 +87,7 @@ H323Connection::AnswerCallResponse
                                     const H323SignalPDU & setupPDU,
                                     H323SignalPDU & /*connectPDU*/)
 {
-  ep.AddMember(this);
+//  ep.AddMember(this);
 
   return AnswerCallNow;
 }

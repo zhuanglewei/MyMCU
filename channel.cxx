@@ -4,7 +4,7 @@
 // ***********************************************************************
 MCUAudioChannel::MCUAudioChannel(MyH323EndPoint & _ep, MyH323Connection & _conn) : ep(_ep) , conn(_conn)
 {
-	isOpen = true;
+isOpen = true;
 }
 // ***********************************************************************
 MCUAudioChannel::~MCUAudioChannel()
@@ -19,6 +19,8 @@ bool MCUAudioChannel::Write(const void * buffer, PINDEX len)
 		return false;
 	Delay.Delay(len/2/8);
 	lastWriteCount = len;
+  if(conn.RoomID == NULL)
+    return true;
 	return WriteMemberAudio(buffer, len);
 }
 // ***********************************************************************
@@ -60,12 +62,12 @@ bool MCUAudioChannel::ReadBufferAudio(void * buffer, PINDEX amount)
 bool MCUAudioChannel::WriteMemberAudio(const void * buffer, PINDEX len)//向同个会议成员写入音频数据
 {
 	PString thisToken = conn.GetCallToken();
+  PString RoomID = conn.GetRoomID();
 
+  PStringList memberList = ep.memberListDict[RoomID];
 	PINDEX i;
-    for (i = 0; i < ep.memberList.GetSize(); i++) {
-    	
-    	PString token = ep.memberList[i];
-    	
+    for (i = 0; i < memberList.GetSize(); i++) { 	
+    	PString token = memberList[i];
     	if (token != thisToken) {
       		MyH323Connection * member = (MyH323Connection *)ep.FindConnectionWithLock(token);
       		if (member != NULL) { 
@@ -76,7 +78,7 @@ bool MCUAudioChannel::WriteMemberAudio(const void * buffer, PINDEX len)//向同�
     	else
     		continue;		     
     }
-    return TRUE;
+    return true;
 }
 // ***********************************************************************
 bool MCUAudioChannel::WriteBufferAudio(const PString & token, const void * buffer, PINDEX len,MyH323Connection * member)//向连接中的指定token的buffer写入数据

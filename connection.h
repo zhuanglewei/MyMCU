@@ -17,6 +17,7 @@ class MyH323Connection : public H323Connection
 
   public:
     MyH323Connection(MyH323EndPoint & _ep, unsigned ref);
+    friend class MCUAudioChannel;
 
     virtual PBoolean OnStartLogicalChannel(H323Channel &);
     virtual void OnUserInputString(const PString &);
@@ -26,23 +27,23 @@ class MyH323Connection : public H323Connection
     virtual bool OpenAudioChannel(bool isEncoding, unsigned bufferSize, H323AudioCodec & codec);
 
     bool OnIncomingAudio(const void * buffer, PINDEX len);
-//    bool OnOutgoingAudio(void * buffer, PINDEX len);
     void AddMember(const PString & token);
     void RemoveMember(const PString & token);
 
 
     bool ReadAudio(void * buffer, PINDEX len);
     bool WriteAudio(const PString & token, const void * buffer, PINDEX len);
-    AudioBufferDict audioBuffers;
-
+    
+    PString GetRoomID() {   return RoomID; }
 private:
+    AudioBufferDict audioBuffers;
 	MCUAudioChannel * incomingAudio;
 	MCUAudioChannel * outgoingAudio;
 	
 	PMutex audioMutex;
 	MyH323EndPoint & ep;
 
-
+    PString RoomID;
 };
 
 #endif

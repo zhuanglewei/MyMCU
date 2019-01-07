@@ -3,7 +3,7 @@
 
 #include <ptlib.h>
 
-#define DEFAULT_PORT 1820
+#define DEFAULT_PORT 1720
 
 class ProgConf
 {
