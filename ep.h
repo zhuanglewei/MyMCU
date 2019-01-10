@@ -5,6 +5,7 @@
 #include "version.h"
 #include "connection.h"
 #include "channel.h"
+#include <string.h>
 
 PDICTIONARY(StringListDict, PString, PStringList);
 
@@ -16,7 +17,7 @@ class MyH323EndPoint: public H323EndPoint
 	const ProgConf & progConf;  
 public:
 	MyH323EndPoint(const ProgConf & conf);
-	friend class MCUAudioChannel;
+
 	~MyH323EndPoint();
 	bool Init(void); 
 	virtual void OnConnectionEstablished(H323Connection &connection, 
@@ -35,8 +36,10 @@ public:
     void RemoveMember(MyH323Connection * oldConn);
 
 	virtual H323Connection * CreateConnection(unsigned callReference);
+	StringListDict & GetRoomIDList(){ return memberListDict; }
 
-	
+	PString GetRoomNameList();
+	void DeleteAllRoom();
 private:
 //	PStringList memberList;
 	StringListDict memberListDict;

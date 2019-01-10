@@ -17,7 +17,6 @@ class MyH323Connection : public H323Connection
 
   public:
     MyH323Connection(MyH323EndPoint & _ep, unsigned ref);
-    friend class MCUAudioChannel;
 
     virtual PBoolean OnStartLogicalChannel(H323Channel &);
     virtual void OnUserInputString(const PString &);
@@ -34,7 +33,8 @@ class MyH323Connection : public H323Connection
     bool ReadAudio(void * buffer, PINDEX len);
     bool WriteAudio(const PString & token, const void * buffer, PINDEX len);
     
-    PString GetRoomID() {   return RoomID; }
+    PString  GetRoomID() {  return RoomID; }
+    AudioBufferDict & GetAudioBuffers() { return audioBuffers; } 
 private:
     AudioBufferDict audioBuffers;
 	MCUAudioChannel * incomingAudio;
@@ -44,6 +44,8 @@ private:
 	MyH323EndPoint & ep;
 
     PString RoomID;
+    int identify;
+    int Listen_status;
 };
 
 #endif

@@ -1,9 +1,7 @@
 #include "buffer.h"
 
-#define PCM_PACKET_LEN          240
-// size of a PCM data buffer, in bytes
+#define PCM_PACKET_LEN          320
 #define PCM_BUFFER_LEN          (PCM_PACKET_LEN * 2)
-// number of PCM buffers to keep
 #define PCM_BUFFER_COUNT        2
 #define PCM_BUFFER_SIZE         (PCM_BUFFER_LEN * PCM_BUFFER_COUNT)
 
@@ -23,39 +21,29 @@ void AudioBuffer::Read(BYTE * data, PINDEX amount)
 {
   if (amount == 0)
     return;
-
   PWaitAndSignal mutex(audioBufferMutex);
-  
   if (bufferLen == 0) {
-    memset(data, 0, amount); // nothing in the buffer. return silence
+    memset(data, 0, amount); //如果buffer不存在数据，返回静音
     return;
   }
-
-  // fill output data block with silence if audiobuffer is
-  // almost empty.
+  // 读取数据大小大于buffer存在数据，将buffer数据后以0补齐
   if (amount > bufferLen) 
     memset(data + bufferLen, 0, amount - bufferLen);
-
-  // only copy up to the amount of data remaining
+  // 
   PINDEX copyLeft = PMIN(amount, bufferLen);
 
-  // if buffer is wrapping, get first part
+  // 如果buffer区正在更新，则获取第一部分
   if ((bufferStart + copyLeft) > bufferSize) {
     PINDEX toCopy = bufferSize - bufferStart;
-
     memcpy(data, buffer + bufferStart, toCopy);
-
     data        += toCopy;
     bufferLen   -= toCopy;
     copyLeft    -= toCopy;
     bufferStart = 0;
   }
-
-  // get the remainder of the buffer
+  // 获取buffer区的其余部分
   if (copyLeft > 0) {
-
     memcpy(data, buffer + bufferStart, copyLeft);
-
     bufferLen -= copyLeft;
     bufferStart = (bufferStart + copyLeft) % bufferSize;
   }
@@ -69,14 +57,13 @@ void AudioBuffer::ReadAndMix(BYTE * data, PINDEX amount, PINDEX channels)
   PWaitAndSignal mutex(audioBufferMutex);
   
   if (bufferLen == 0) {
-    // nothing in the buffer to mix.
     return;
   }
 
   // only mix up to the amount of data remaining
   PINDEX copyLeft = PMIN(amount, bufferLen);
 
-  // if buffer is wrapping, get first part
+  // 如果buffer区被划分为首尾连段
   if ((bufferStart + copyLeft) > bufferSize) {
     PINDEX toCopy = bufferSize - bufferStart;
 
@@ -88,7 +75,7 @@ void AudioBuffer::ReadAndMix(BYTE * data, PINDEX amount, PINDEX channels)
     bufferStart = 0;
   }
 
-  // get the remainder of the buffer
+  // 获取剩余的buffer区
   if (copyLeft > 0) {
 
     Mix(data, buffer + bufferStart, copyLeft, channels);
@@ -98,39 +85,6 @@ void AudioBuffer::ReadAndMix(BYTE * data, PINDEX amount, PINDEX channels)
   }
 }
 
-void AudioBuffer::Mix(BYTE * dst, const BYTE * src, PINDEX count, PINDEX /*channels*/)
-{
-#if 0
-  memcpy(dst, src, count);
-#else
-  PINDEX i;
-  for (i = 0; i < count; i += 2) {
-
-    int srcVal = *(short *)src;
-    int dstVal = *(short *)dst;
-
-    int newVal = dstVal;
-
-#if 1     //The loudest person gains the channel.
-#define mix_abs(x) ((x) >= 0 ? (x) : -(x))
-    if (mix_abs(newVal) > mix_abs(srcVal))
-      dstVal = newVal;
-    else
-      dstVal = srcVal; 
-#else   //Just add up all the channels.
-    if ((newVal + srcVal) > 0x7fff)
-      dstVal = 0x7fff;
-    else
-      dstVal += srcVal;
-#endif
-    *(short *)dst = (short)dstVal;
-
-    dst += 2;
-    src += 2;
-  }
-#endif
-}
-
 void AudioBuffer::Write(const BYTE * data, PINDEX amount)
 {
   if (amount == 0)
@@ -138,15 +92,14 @@ void AudioBuffer::Write(const BYTE * data, PINDEX amount)
 
   PWaitAndSignal mutex(audioBufferMutex);
   
-  // if there is not enough room for the new data, make room
+  // 如果没有足够空间存储数据
   PINDEX newLen = bufferLen + amount;
   if (newLen > bufferSize) {
     PINDEX toRemove = newLen - bufferSize;
     bufferStart = (bufferStart + toRemove) % bufferSize;
     bufferLen -= toRemove;
   }
-
-  // copy data to the end of the new data, up to the end of the buffer
+  //将数据复制到新数据的末尾，直到buffer区的末尾
   PINDEX copyStart = (bufferStart + bufferLen) % bufferSize;
   if ((copyStart + amount) > bufferSize) {
     PINDEX toCopy = bufferSize - copyStart;
@@ -156,10 +109,36 @@ void AudioBuffer::Write(const BYTE * data, PINDEX amount)
     amount    -= toCopy;
     bufferLen += toCopy;
   }
-
-  // copy the rest of the data
+  // 复制剩余数据
   if (amount > 0) {
     memcpy(buffer + copyStart, data, amount);
     bufferLen   += amount;
+  }
+}
+
+void AudioBuffer::Mix(BYTE * dst, const BYTE * src, PINDEX count, PINDEX /*channel*/)
+{
+  int const MAX = 32767;
+  int const MIN =-32767;
+  double f = 1;
+  PINDEX i;
+  for(i=0; i<count; i+=2){
+    int srcVal = *(short *)src;
+    int dstVal = *(short *)dst;
+    int output = dstVal + srcVal;
+    output = (int)(output * f);
+    if(output > MAX){
+      f = (double)MAX / (double)(output);
+      output = MAX;
+    }
+    if(output < MIN){
+      f = (double)MIN / (double)(output);
+      output = MIN;
+    }
+    if(f<1)
+      f += ((double)1-f)/(double)32;
+    *(short *)dst = (short)output;
+    dst += 2;
+    src += 2;
   }
 }

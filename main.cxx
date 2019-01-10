@@ -1,7 +1,7 @@
 #include "main.h"
 #include "version.h"
 #include "ep.h"
-
+#define PTRACING 0
 PCREATE_PROCESS(MyMCU)
 
 static PSyncPoint terminationSync; 
@@ -15,10 +15,10 @@ MyMCU::~MyMCU()
 
 void MyMCU::Main()
 {
-	cout << "MyMCU running." << endl;
-	
-	PConfigArgs args(GetArguments()); 
+	cout << "MyMCU 运行中..." << endl;
 
+	PConfigArgs args(GetArguments()); 
+	
 	args.Parse(
 #if PTRACING
 			"t-trace."
@@ -77,7 +77,7 @@ void MyMCU::Main()
 
 	if (endpoint.Init()) 
 	{
-		cout << "MyMCU running" << endl;
+//		cout << "MyMCU running" << endl;
 		for (;;)
 		{
     		cout << "MyMCU> " << flush;
@@ -85,7 +85,12 @@ void MyMCU::Main()
   		    cin >> cmd;
 		    if (cmd == "X")
 		        break;
+		    if (cmd == "L")
+		    {
+		    	cout << endpoint.GetRoomNameList();
+		    }
         }
+        endpoint.DeleteAllRoom();
 	}
 
 	cout << "MyMCU关闭..." << endl;

@@ -65,7 +65,7 @@ bool MyH323EndPoint::Init()
 
 	if (!gkResult)
 	{
-		PError << "Failed to register with gatekeeper" << endl; 
+		PError << "注册网守失败" << endl; 
 		return false;
 	} 		
 	return true;
@@ -76,7 +76,7 @@ bool MyH323EndPoint::Init()
 void MyH323EndPoint::OnConnectionEstablished(H323Connection & connection, 
 						const PString & token)
 {
-	PTRACE(1, "Connection established, token is " << token);
+	PTRACE(1, "连接建立, token标识符是 " << token);
 }
 
 // ***********************************************************************
@@ -84,7 +84,8 @@ void MyH323EndPoint::OnConnectionEstablished(H323Connection & connection,
 void MyH323EndPoint::OnConnectionCleared(H323Connection &connection, 
 						const PString &token)
 {
-	PTRACE(1, "Connection cleared, token is " << token);
+//	RemoveMember(（MyH323Connection）&connection);
+	PTRACE(1, "connection连接被清除, token标识符是 " << token);
 }
 
 // ***********************************************************************
@@ -95,7 +96,7 @@ H323Connection::AnswerCallResponse MyH323EndPoint::OnAnswerCall(
 						const H323SignalPDU &, 
 						H323SignalPDU &)
 {
-	PTRACE(1, "Accepting connection from " << caller);
+	PTRACE(1, "允许来自于 " << caller << " 的呼叫");
 	return H323Connection::AnswerCallNow;
 } 
 
@@ -104,19 +105,8 @@ H323Connection::AnswerCallResponse MyH323EndPoint::OnAnswerCall(
 bool MyH323EndPoint::OnStartLogicalChannel(H323Connection & connection, 
 						H323Channel & channel)
 {
-	PString dir;
-	switch (channel.GetDirection())
-	{
-	case H323Channel::IsTransmitter :
-		dir = "sending";
-		break;
-	case H323Channel::IsReceiver :
-		dir = "receiving";
-		break;
-	default :
-		break;
-	}
-	cout <<  "Started logical channel " << dir << " " << channel.GetCapability() << endl;
+	PTRACE(1,"开启逻辑通道: " << ((channel.GetDirection()==H323Channel::IsTransmitter) ? (" sending "):(" receiving "))
+                           <<  channel.GetCapability() );
 	return true;
 }
 
@@ -136,17 +126,17 @@ void MyH323EndPoint::AddMember(MyH323Connection * newMember)
 	PString RoomID = newMember->GetRoomID();
 	if(RoomID == NULL)
 		return;
-	if(!memberListDict.Contains(RoomID))
+	if(!memberListDict.Contains(RoomID)){
+		PTRACE(1,"创建会议房间 - " << RoomID);
 		memberListDict.SetAt(RoomID,new PStringList);
+	}
 	PStringList memberList = memberListDict[RoomID];
-
+	PTRACE(1,"会议房间：" << RoomID << "添加成员-" << newToken);
 	memberList.AppendString(newToken);
-	cout << "newmember adding." << endl;
 	PINDEX i;
   	for (i = 0; i < memberList.GetSize(); i++) {
     	PString token = memberList[i];
     	if (token != newToken) {      
-      		cout << "Adding member " << newToken << " to list of " << token << endl;
       		MyH323Connection * conn = (MyH323Connection *)FindConnectionWithLock(token);
       		if (conn != NULL) {
         		conn->AddMember(newToken);
@@ -154,8 +144,6 @@ void MyH323EndPoint::AddMember(MyH323Connection * newMember)
         		conn->Unlock();
       		}
     } 
-    else 
-        cout << "Member " << newToken << " will not hear their own voice" << endl; 
   }
 }
 
@@ -169,7 +157,7 @@ void MyH323EndPoint::RemoveMember(MyH323Connection * oldConn)
   	if(RoomID == NULL || !memberListDict.Contains(RoomID))
   		return;
   	PStringList memberList = memberListDict[RoomID];
-
+  	PTRACE(1,"会议房间 " << RoomID << "删除成员-" << oldToken);
   	PINDEX i;
   	for (i = 0; i < memberList.GetSize(); i++) {
     	PString token = memberList[i];
@@ -183,9 +171,54 @@ void MyH323EndPoint::RemoveMember(MyH323Connection * oldConn)
     	}
   	}
   	memberList.RemoveAt(memberList.GetStringsIndex(oldToken));
-
   	if(memberList.GetSize() == 0){
+  		PTRACE(1,"删除会议房间:" << RoomID);
   		memberListDict.RemoveAt(RoomID);
   	}
 }
+
 // ***********************************************************************
+
+PString MyH323EndPoint::GetRoomNameList()
+{
+	PString RoomList;
+	if(memberListDict.GetSize() == 0){
+		RoomList += "MCU 不存在会议房间.\n";
+	}
+	else{
+		RoomList += "MCU已存在会议房间列表：" ;
+		RoomList += "\n序号\t会议房间名字";
+		PINDEX i;
+		for(i=0; i<memberListDict.GetSize(); i++){
+			PString RoomID = memberListDict.GetKeyAt(i);
+			char str[3];
+			sprintf(str,"%d",i);
+			RoomList += "\n";
+			RoomList += str;
+			RoomList += "\t" + RoomID +"\n";		    	
+		}
+	}
+	return RoomList;
+}
+
+void MyH323EndPoint::DeleteAllRoom()
+{
+	PINDEX i;
+	for(i=0; i<memberListDict.GetSize(); i++){
+		PString RoomID = memberListDict.GetKeyAt(i);
+		PStringList memberList = memberListDict[RoomID];
+		PINDEX j;
+		for(j=0; j<memberList.GetSize(); j++)
+		{
+			PString token = memberList[j];
+      		MyH323Connection * member = (MyH323Connection *)FindConnectionWithLock(token);
+      		if (member != NULL) { 
+				RemoveMember(member);
+				member->ClearCall();
+        		member->Unlock();
+        	}
+
+    	}
+    	
+	}
+}
