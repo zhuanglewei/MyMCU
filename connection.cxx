@@ -23,11 +23,33 @@ PBoolean MyH323Connection::OnStartLogicalChannel(H323Channel & channel)
 
 void MyH323Connection::OnUserInputString(const PString & value)
 {
-  if(value == "create"){
-              RoomID = this->GetRemotePartyName();
-              ep.AddMember(this);
-              cout << "创建房间" << RoomID << endl;
-              cout << "MyMCU>" << flush;
+  int i;
+  if(value[0] == '-'){
+    switch(value[1]){
+      case 'c':
+        if(RoomID != NULL)
+          break; 
+        RoomID = value.Mid(1,value.GetSize()-2);
+        ep.AddMember(this);
+        break;
+      case 'j':
+        if(RoomID != NULL)
+          break;
+        i = value.Mid(1,value.GetSize()-2).AsInt64();
+        RoomID = ep.GetRoomIDList().GetKeyAt(i);
+        ep.AddMember(this);
+        break;
+      case 'R':
+        this->SendUserInput(ep.GetRoomNameList());
+        break;
+      case 'y':
+
+        break;
+      default:
+        this->SendUserInput("无法识别信息，请按以下格式发送：" + ep.GetHelpString());
+        PTRACE(1,"收到无法识别信息：" << value);
+        break;
+    }
   }
   return;
 }
@@ -68,12 +90,7 @@ H323Connection::AnswerCallResponse
                                     const H323SignalPDU & setupPDU,
                                     H323SignalPDU & /*connectPDU*/)
 {
-  PString str;
-  str += "欢迎使用MCU服务器\n请输入以下命令与MCU交互：\n";
-  str += "-c + 房间号\t创建房间\n";
-  str += "-j + 序号\t加入房间\n";
-  str += "-l\t\t查看MCU房间";
-  this->SendUserInput(str);
+  this->SendUserInput(ep.GetHelpString());
   return AnswerCallNow;
 }
 

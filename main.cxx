@@ -1,7 +1,7 @@
 #include "main.h"
 #include "version.h"
 #include "ep.h"
-#define PTRACING 0
+
 PCREATE_PROCESS(MyMCU)
 
 static PSyncPoint terminationSync; 

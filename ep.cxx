@@ -222,3 +222,13 @@ void MyH323EndPoint::DeleteAllRoom()
     	
 	}
 }
+
+PString MyH323EndPoint::GetHelpString(){
+ 	PString helpString;
+  	helpString += "欢迎使用MCU服务器\n请输入以下命令与MCU交互：\n";
+  	helpString += "-Read\t\t\t查看MCU已存在房间\n";
+  	helpString += "-c + 房间号\t\t创建房间\t如：-c+001\n";
+  	helpString += "-j + 房间号\t\t加入房间\t如：-j+001\n";
+  	helpString += "-y + IP地址\\用户名\t邀请加入房间\t如：-y+Name";
+  	return helpString;
+}

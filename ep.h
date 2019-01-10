@@ -37,7 +37,7 @@ public:
 
 	virtual H323Connection * CreateConnection(unsigned callReference);
 	StringListDict & GetRoomIDList(){ return memberListDict; }
-
+	PString GetHelpString();
 	PString GetRoomNameList();
 	void DeleteAllRoom();
 private:
