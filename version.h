@@ -4,6 +4,9 @@
 #include <ptlib.h>
 
 #define DEFAULT_PORT 1720
+#define Speaker 1
+#define Listener 0
+#define ChairMan 2
 
 class ProgConf
 {

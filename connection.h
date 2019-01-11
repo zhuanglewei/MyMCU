@@ -25,16 +25,18 @@ class MyH323Connection : public H323Connection
     virtual AnswerCallResponse OnAnswerCall(const PString &, const H323SignalPDU &, H323SignalPDU &);
     virtual bool OpenAudioChannel(bool isEncoding, unsigned bufferSize, H323AudioCodec & codec);
 
-    bool OnIncomingAudio(const void * buffer, PINDEX len);
+    
+
     void AddMember(const PString & token);
     void RemoveMember(const PString & token);
 
-
     bool ReadAudio(void * buffer, PINDEX len);
     bool WriteAudio(const PString & token, const void * buffer, PINDEX len);
-    
-    PString  GetRoomID() {  return RoomID; }
     AudioBufferDict & GetAudioBuffers() { return audioBuffers; } 
+
+    PString  GetRoomID() {  return RoomID; }
+    
+    void SetIdentify(int i);
 private:
     AudioBufferDict audioBuffers;
 	MCUAudioChannel * incomingAudio;
@@ -45,7 +47,7 @@ private:
 
     PString RoomID;
     int identify;
-    int Listen_status;
+    bool speaker;
 };
 
 #endif

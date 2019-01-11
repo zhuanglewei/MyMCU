@@ -129,6 +129,8 @@ void MyH323EndPoint::AddMember(MyH323Connection * newMember)
 	if(!memberListDict.Contains(RoomID)){
 		PTRACE(1,"创建会议房间 - " << RoomID);
 		memberListDict.SetAt(RoomID,new PStringList);
+		newMember->SetIdentify(ChairMan);
+		PTRACE(1,newMember->GetRemotePartyName() + "成为会员房间 " + RoomID + " 的主席.");
 	}
 	PStringList memberList = memberListDict[RoomID];
 	PTRACE(1,"会议房间：" << RoomID << "添加成员-" << newToken);

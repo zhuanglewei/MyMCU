@@ -2,7 +2,7 @@
 #include "ep.h"
 
 MyH323Connection::MyH323Connection(MyH323EndPoint & _ep, unsigned ref)
-  : H323Connection(_ep, ref), ep(_ep),identify(0),Listen_status(0)
+  : H323Connection(_ep, ref), ep(_ep),identify(0),speaker(false)
 {
   incomingAudio = NULL;
   outgoingAudio = NULL;
@@ -24,20 +24,25 @@ PBoolean MyH323Connection::OnStartLogicalChannel(H323Channel & channel)
 void MyH323Connection::OnUserInputString(const PString & value)
 {
   int i;
+  PString order = value.Mid(3,value.GetSize()-2);
   if(value[0] == '-'){
     switch(value[1]){
       case 'c':
         if(RoomID != NULL)
           break; 
-        RoomID = value.Mid(1,value.GetSize()-2);
+        if(!ep.GetRoomIDList().Contains(RoomID))
+          this->SendUserInput("该房间名已存在，请选择新房间名或加入该房间.");
+        RoomID = value.Mid(3,value.GetSize()-2);
         ep.AddMember(this);
+        this->SendUserInput("成功创建会议房间："+RoomID);
         break;
       case 'j':
         if(RoomID != NULL)
           break;
-        i = value.Mid(1,value.GetSize()-2).AsInt64();
+        i = value.Mid(3,value.GetSize()-2).AsInt64();
         RoomID = ep.GetRoomIDList().GetKeyAt(i);
         ep.AddMember(this);
+        this->SendUserInput("成功加入会议房间："+RoomID);
         break;
       case 'R':
         this->SendUserInput(ep.GetRoomNameList());
@@ -51,7 +56,30 @@ void MyH323Connection::OnUserInputString(const PString & value)
         break;
     }
   }
+  else{
+    this->SendUserInput("无法识别信息，请按以下格式发送：" + ep.GetHelpString());
+    PTRACE(1,"收到无法识别信息：" << value);
+  }
   return;
+}
+
+
+void MyH323Connection::SetIdentify(int i)
+{
+  switch(i){
+    case 0:
+      identify = 0;
+      break;
+    case 1:
+      identify = 1;
+      break;
+    case 2:
+      identify = 2;
+      break;
+    default:
+      identify = 0;
+      break;
+  }
 }
 
 // ***********************************************************************
@@ -99,21 +127,16 @@ H323Connection::AnswerCallResponse
 bool MyH323Connection::OpenAudioChannel(bool isEncoding, unsigned bufferSize, H323AudioCodec & codec)
 {
   PWaitAndSignal mutex(audioMutex);
-  if (incomingAudio == NULL){
-    incomingAudio = new MCUAudioChannel(ep, *this);
-  }
-
-  if (outgoingAudio == NULL) {
-    outgoingAudio = new MCUAudioChannel(ep, *this);
-  }
-
   if (isEncoding) {
+    if (outgoingAudio == NULL)
+      outgoingAudio = new MCUAudioChannel(ep, *this);
     codec.AttachChannel(outgoingAudio, FALSE);
   } 
   else{
+    if (incomingAudio == NULL)
+      incomingAudio = new MCUAudioChannel(ep, *this);
     codec.AttachChannel(incomingAudio, FALSE);
   }
-
   return TRUE;
 }
 
