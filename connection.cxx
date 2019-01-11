@@ -30,8 +30,10 @@ void MyH323Connection::OnUserInputString(const PString & value)
       case 'c':
         if(RoomID != NULL)
           break; 
-        if(!ep.GetRoomIDList().Contains(RoomID))
+        if(ep.GetRoomIDList().Contains(RoomID)){
           this->SendUserInput("该房间名已存在，请选择新房间名或加入该房间.");
+          break;
+        }
         RoomID = value.Mid(3,value.GetSize()-2);
         ep.AddMember(this);
         this->SendUserInput("成功创建会议房间："+RoomID);
@@ -40,12 +42,19 @@ void MyH323Connection::OnUserInputString(const PString & value)
         if(RoomID != NULL)
           break;
         i = value.Mid(3,value.GetSize()-2).AsInt64();
+        if(i > ep.GetRoomIDList().GetSize()){
+          this->SendUserInput("请选择正确的房间号");
+          break;
+        }
         RoomID = ep.GetRoomIDList().GetKeyAt(i);
         ep.AddMember(this);
         this->SendUserInput("成功加入会议房间："+RoomID);
         break;
       case 'R':
-        this->SendUserInput(ep.GetRoomNameList());
+        if(RoomID == NULL)
+          this->SendUserInput(ep.GetRoomNameList());
+        else
+          this->SendUserInput(ep.GetMemberName(RoomID));
         break;
       case 'y':
 
@@ -68,13 +77,13 @@ void MyH323Connection::SetIdentify(int i)
 {
   switch(i){
     case 0:
-      identify = 0;
+      identify = Listener;
       break;
     case 1:
-      identify = 1;
+      identify = Speaker;
       break;
     case 2:
-      identify = 2;
+      identify = ChairMan;
       break;
     default:
       identify = 0;

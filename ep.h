@@ -32,17 +32,24 @@ public:
 	virtual bool OnStartLogicalChannel(H323Connection & connection,
 					H323Channel & channel);
 
+
+
+	virtual H323Connection * CreateConnection(unsigned callReference);
+//会议房间管理函数：
+	StringListDict & GetRoomIDList(){ return memberListDict; }
+	PStringList & GetMemberList(PString RoomID){ return RoomMemberList[RoomID]; }
+	PString GetRoomNameList();
+	PString GetMemberName(PString & RoomID);
+	void DeleteAllRoom();
+//会议成员管理函数：
 	void AddMember(MyH323Connection * newMember);
     void RemoveMember(MyH323Connection * oldConn);
 
-	virtual H323Connection * CreateConnection(unsigned callReference);
-	StringListDict & GetRoomIDList(){ return memberListDict; }
 	PString GetHelpString();
-	PString GetRoomNameList();
-	void DeleteAllRoom();
 private:
-//	PStringList memberList;
+
 	StringListDict memberListDict;
+	StringListDict RoomMemberList;
 	PMutex memberMutex;
 
 	

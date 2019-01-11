@@ -129,12 +129,15 @@ void MyH323EndPoint::AddMember(MyH323Connection * newMember)
 	if(!memberListDict.Contains(RoomID)){
 		PTRACE(1,"创建会议房间 - " << RoomID);
 		memberListDict.SetAt(RoomID,new PStringList);
+		RoomMemberList.SetAt(RoomID,new PStringList);
 		newMember->SetIdentify(ChairMan);
 		PTRACE(1,newMember->GetRemotePartyName() + "成为会员房间 " + RoomID + " 的主席.");
 	}
-	PStringList memberList = memberListDict[RoomID];
+	PStringList & memberList = memberListDict[RoomID];
+	PStringList & memberName = RoomMemberList[RoomID];
 	PTRACE(1,"会议房间：" << RoomID << "添加成员-" << newToken);
 	memberList.AppendString(newToken);
+	memberName.AppendString(newMember->GetRemotePartyName());
 	PINDEX i;
   	for (i = 0; i < memberList.GetSize(); i++) {
     	PString token = memberList[i];
@@ -233,4 +236,17 @@ PString MyH323EndPoint::GetHelpString(){
   	helpString += "-j + 房间号\t\t加入房间\t如：-j+001\n";
   	helpString += "-y + IP地址\\用户名\t邀请加入房间\t如：-y+Name";
   	return helpString;
+}
+
+PString MyH323EndPoint::GetMemberName(PString & RoomID){
+	PString nameList ;
+	nameList += "会议房间 " + RoomID +" 存在成员：\n";
+	PStringList & memberList = RoomMemberList[RoomID];
+	PINDEX i;
+	for(i=0; i<memberList.GetSize(); i++){
+		nameList += "\t" +memberList[i];
+		if(i%4 == 0)
+			nameList += "\n";
+	}
+	return nameList;
 }
