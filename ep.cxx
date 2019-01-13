@@ -240,13 +240,13 @@ PString MyH323EndPoint::GetHelpString(){
 
 PString MyH323EndPoint::GetMemberName(PString & RoomID){
 	PString nameList ;
-	nameList += "会议房间 " + RoomID +" 存在成员：\n";
+	nameList += "会议房间 " + RoomID +" 存在成员：";
 	PStringList & memberList = RoomMemberList[RoomID];
 	PINDEX i;
 	for(i=0; i<memberList.GetSize(); i++){
-		nameList += "\t" +memberList[i];
 		if(i%4 == 0)
 			nameList += "\n";
+		nameList += "\t" +memberList[i];
 	}
 	return nameList;
 }

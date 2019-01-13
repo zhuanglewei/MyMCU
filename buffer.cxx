@@ -142,3 +142,7 @@ void AudioBuffer::Mix(BYTE * dst, const BYTE * src, PINDEX count, PINDEX /*chann
     src += 2;
   }
 }
+
+#if Video
+
+#endif

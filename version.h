@@ -29,5 +29,6 @@ public:
 #define MyMCU_VER_MINOR 1
 #define MyMCU_VER_STATUS ReleaseCode
 #define MyMCU_VER_BUILD 1
+#define Video 0
 
 #endif
